@@ -1,0 +1,200 @@
+{
+  "name": "lead qualifier",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "22ba76a3-13bd-4557-9140-2de4a732a455",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "quality lead",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.2,
+      "position": [
+        144,
+        144
+      ],
+      "id": "696d350e-bdc7-4f40-9191-9bfbd3e94336",
+      "name": "Webhook",
+      "webhookId": "d0159144-c0e4-47b3-a31b-361b4439425a"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://127.0.0.1:8000/qualify-batch",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.body) }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        368,
+        144
+      ],
+      "id": "2d71c03a-0606-4b47-adfb-147265dd9b90",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 4
+          },
+          "conditions": [
+            {
+              "id": "795721af-9f89-4510-9b0c-f486598a20a3",
+              "leftValue": "={{ $json.category }}",
+              "rightValue": "HOT",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.4,
+      "position": [
+        816,
+        144
+      ],
+      "id": "6c968a89-cb5b-4260-addb-2b16f44c296a",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "={\n  \"lead_id\": \"{{ $json.id }}\",\n  \"category\": \"{{ $json.category }}\",\n  \"urgency\": \"{{ $json.urgency }}\",\n  \"next_action\": \"{{ $json.next_action }}\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        1040,
+        48
+      ],
+      "id": "b005d40f-8e8e-4acc-8854-47268b4b1998",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "={\n  \"lead_id\": \"{{ $json.id }}\",\n  \"category\": \"{{ $json.category }}\",\n  \"status\": \"Nurture Queue\",\n  \"next_action\": \"{{ $json.next_action }}\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        1040,
+        240
+      ],
+      "id": "44dd50e4-f230-4713-9329-aa362740a5d3",
+      "name": "Edit Fields1"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "results ",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1.1,
+      "position": [
+        592,
+        144
+      ],
+      "id": "969e1ed2-3dd4-4d68-9d0a-060945241f00",
+      "name": "Split Out"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        []
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Split Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Edit Fields1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": true
+  },
+  "versionId": "99bc769a-896d-43ed-bbae-de78a6365f1a",
+  "meta": {
+    "instanceId": "08f1b1e2639e502b1f48e52ccf67630c9c8bf3d95cf8950a3208fb4f1980abf3"
+  },
+  "nodeGroups": [],
+  "id": "JDkmmg9ZTkl36DMK",
+  "tags": []
+}

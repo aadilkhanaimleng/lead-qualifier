@@ -1,0 +1,1 @@
+- **Day 02:** End-to-end n8n webhook routing (HOT vs Nurture) with automated Gmail SMTP email alerts.

@@ -31,10 +31,10 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "http://127.0.0.1:8000/qualify-batch",
+        "url": "http://127.0.0.1:8000/qualify",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify($json.body) }}",
+        "jsonBody": "={{ JSON.stringify({ lead_name: $json.body.leads[0].lead_name || $json.body.leads[0].id || '', niche: $json.body.leads[0].niche || $json.body.leads[0].source || '', message: $json.body.leads[0].message || $json.body.leads[0].msg || '' }) }}",
         "options": {}
       },
       "type": "n8n-nodes-base.httpRequest",
@@ -58,12 +58,12 @@
           "conditions": [
             {
               "id": "795721af-9f89-4510-9b0c-f486598a20a3",
-              "leftValue": "={{ $json.category }}",
+              "leftValue": "={{ $json.is_high_ticket }}",
               "rightValue": "HOT",
               "operator": {
-                "type": "string",
-                "operation": "equals",
-                "name": "filter.operator.equals"
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
               }
             }
           ],
@@ -112,17 +112,128 @@
     },
     {
       "parameters": {
-        "fieldToSplitOut": "results ",
+        "fromEmail": "aadilkhan120607@gmail.com",
+        "toEmail": "aadilkhan120607@gmail.com",
+        "subject": "=🔥 New HOT Lead: {{ $json.lead_id }}",
+        "emailFormat": "text",
+        "text": "=Lead ID: {{ $json.lead_id }}\nCategory: {{ $json.category }}\nUrgency: {{ $json.urgency }}\nNext Action: {{ $json.next_action }}",
         "options": {}
       },
-      "type": "n8n-nodes-base.splitOut",
-      "typeVersion": 1.1,
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
       "position": [
-        592,
-        144
+        1264,
+        48
       ],
-      "id": "969e1ed2-3dd4-4d68-9d0a-060945241f00",
-      "name": "Split Out"
+      "id": "f6979a12-282c-476f-9295-5f1c86e978ef",
+      "name": "Send an Email",
+      "webhookId": "815a396b-7a5e-4f01-ba6e-fe8ea2663afe",
+      "credentials": {
+        "smtp": {
+          "id": "ccoon4FdDtApeHjO",
+          "name": "SMTP account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "https://docs.google.com/spreadsheets/d/108Jh2VLboLDlevn2iTNlI5rPIpU-V-FvG5ZtWytq_As/edit?gid=0#gid=0",
+          "mode": "url"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Sheet1",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "TIMESTAMP": "={{ $now.toISO() }}",
+            "LEAD ID": "={{ $('HTTP Request').item.json.lead_name }}",
+            "CATEGORY ": "={{ $('HTTP Request').item.json.niche }}",
+            "URGENCY": "={{ $('HTTP Request').item.json.priority }}",
+            "NEXT ACTION": "={{ $('HTTP Request').item.json.reason }}",
+            "RAW MESSAGE": "={{ $json.msg || $json.message || $('Webhook').item.json.body.leads[0].msg }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "TIMESTAMP",
+              "displayName": "TIMESTAMP",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "LEAD ID",
+              "displayName": "LEAD ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "CATEGORY ",
+              "displayName": "CATEGORY ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "URGENCY",
+              "displayName": "URGENCY",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "NEXT ACTION",
+              "displayName": "NEXT ACTION",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "RAW MESSAGE",
+              "displayName": "RAW MESSAGE",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1216,
+        240
+      ],
+      "id": "dd0f639d-2a35-40fa-8da3-831ae9a5d132",
+      "name": "Append row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "EM9BwYsl15H8OoDa",
+          "name": "Google Sheets account"
+        }
+      }
     }
   ],
   "pinData": {},
@@ -147,7 +258,7 @@
       "main": [
         [
           {
-            "node": "Split Out",
+            "node": "If",
             "type": "main",
             "index": 0
           }
@@ -158,7 +269,7 @@
       "main": [
         [
           {
-            "node": "Edit Fields",
+            "node": "Edit Fields1",
             "type": "main",
             "index": 0
           }
@@ -172,11 +283,22 @@
         ]
       ]
     },
-    "Split Out": {
+    "Edit Fields": {
       "main": [
         [
           {
-            "node": "If",
+            "node": "Send an Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields1": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet",
             "type": "main",
             "index": 0
           }
@@ -190,8 +312,9 @@
     "binaryMode": "separate",
     "availableInMCP": true
   },
-  "versionId": "99bc769a-896d-43ed-bbae-de78a6365f1a",
+  "versionId": "3737c582-6938-4c30-8c0b-e3eb18e16ab3",
   "meta": {
+    "templateCredsSetupCompleted": true,
     "instanceId": "08f1b1e2639e502b1f48e52ccf67630c9c8bf3d95cf8950a3208fb4f1980abf3"
   },
   "nodeGroups": [],
